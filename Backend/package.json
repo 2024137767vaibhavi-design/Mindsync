@@ -1,0 +1,14 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MindSync is a multi-platform mental health companion app designed to support emotional wellbeing through journaling, AI-powered conversations, emergency alerts, and calming design. Built with privacy-first principles and installable on both web and mobile.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
