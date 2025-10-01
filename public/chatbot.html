@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MindCare - Chatbot</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <h1 class="logo">
+      <img src="assets/image.png" alt="MindCare Logo" class="logo-img" />
+    </h1>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="journal.html">Journal</a></li>
+      <li><a href="wellness.html">Wellness</a></li>
+      <li><a href="playlist.html">Playlist</a></li>
+      <li><a href="emergency.html">Emergency</a></li>
+    </ul>
+  </nav>
+
+  <!-- Chatbot Section -->
+  <main class="chatbot">
+    <h2>💬 Talk to MindCare</h2>
+    <div id="chatBox" class="chat-box"></div>
+    <div class="chat-input">
+      <input type="text" id="chatInput" placeholder="Type your message..." />
+      <button id="sendBtn">Send</button>
+      <button id="voiceBtn">🎤</button>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
