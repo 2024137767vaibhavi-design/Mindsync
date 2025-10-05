@@ -4,7 +4,7 @@ let barChartInstance;
 
 document.addEventListener("DOMContentLoaded", () => {
   // VITALS DASHBOARD
-  fetch("http://127.0.0.1:5000/api/vitals")
+  fetch("https://mindsync-tu30.onrender.com/api/vitals")
     .then(res => res.json())
     .then(vitals => {
       currentVitals = vitals;
@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (el) el.textContent = vitals[key];
       }
       // After vitals load, fetch assessment
-      fetch("http://127.0.0.1:5000/api/vitals/assessment")
+      fetch("https://mindsync-tu30.onrender.com/api/vitals/assessment")
         .then(res => res.json())
         .then(assessment => renderAssessment(assessment))
         .catch(err => console.error("Error fetching assessment:", err));
@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const entry = { title, date, mood, content };
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/journal", {
+      const response = await fetch("https://mindsync-tu30.onrender.com/api/journal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(entry),
@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!historyContainer) return;
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/journal");
+      const res = await fetch("https://mindsync-tu30.onrender.com/api/journal");
       const entries = await res.json();
 
       historyContainer.innerHTML = ""; // clear old
@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     try {
       console.log("Attempting to delete entry with ID:", id);
-      const response = await fetch(`http://127.0.0.1:5000/api/journal/${id}`, {
+      const response = await fetch(`https://mindsync-tu30.onrender.com/api/journal/${id}`, {
         method: "DELETE"
       });
       
@@ -211,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
         relationship: document.getElementById("contactRelation").value
       };
 
-      fetch("http://127.0.0.1:5000/api/emergency/contacts", {
+      fetch("https://mindsync-tu30.onrender.com/api/emergency/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contact)
@@ -229,7 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function loadContacts() {
-      fetch("http://127.0.0.1:5000/api/emergency/contacts")
+      fetch("https://mindsync-tu30.onrender.com/api/emergency/contacts")
         .then(res => res.json())
         .then(contacts => {
           contactList.innerHTML = "";
@@ -272,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function sendSOS() {
-    fetch("http://127.0.0.1:5000/api/emergency/contacts")
+    fetch("https://mindsync-tu30.onrender.com/api/emergency/contacts")
       .then(res => res.json())
       .then(contacts => {
         contacts.forEach(contact => {
@@ -502,7 +502,7 @@ document.addEventListener("DOMContentLoaded", () => {
     chatInput.value = "";
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/chatbot", {
+      const response = await fetch("https://mindsync-tu30.onrender.com/api/chatbot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message })
@@ -538,4 +538,5 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Enter") sendChatMessage();
   });
   voiceBtn?.addEventListener("click", startVoice);
+
 });
