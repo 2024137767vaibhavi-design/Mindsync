@@ -19,7 +19,7 @@ if (!process.env.OPENAI_API_KEY || !process.env.MONGO_URI) {
   dotenv.config({ path: path.resolve(__dirname, "../.env") });
 }
 
-// Minimal masked diagnostics to confirm env loading
+// Minimal masked diagnostics
 const mask = (val) => (val ? `${val.length} chars, ends ${val.slice(-4)}` : "missing");
 console.log(
   "ENV check:",
@@ -42,10 +42,11 @@ app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/emergency", emergencyRoutes);
 app.use("/api/vitals", vitalsRoutes);
 
-// Serve frontend
-app.use(express.static(path.join(__dirname, "public")));
+// Serve frontend from ../public
+const frontendPath = path.resolve(__dirname, "../public");
+app.use(express.static(frontendPath));
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 // Ping route
