@@ -1,2 +1,2 @@
-MONGO_URI=mongodb://localhost:27017/mindsync
-GROQ_API_KEY=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
+.env
+/node_modules
