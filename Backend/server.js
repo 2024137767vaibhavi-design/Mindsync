@@ -12,53 +12,52 @@ import chatbotRoutes from "./routes/chatbot.js";
 import emergencyRoutes from "./routes/emergency.js";
 import vitalsRoutes from "./routes/vitals.js";
 
-// Load environment variables
+// ------------------ ENV SETUP ------------------
 dotenv.config();
-if (!process.env.OPENAI_API_KEY || !process.env.MONGO_URI) {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  dotenv.config({ path: path.resolve(__dirname, "../.env") });
-}
-
-// Minimal masked diagnostics (no secrets)
-const mask = (val) => (val ? `${val.length} chars, ends ${val.slice(-4)}` : "missing");
-console.log("ENV check:", {
-  OPENAI_API_KEY: mask(process.env.OPENAI_API_KEY || ""),
-  MONGO_URI: process.env.MONGO_URI ? "present" : "missing",
-});
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Try loading parent .env if needed
+if (!process.env.OPENAI_API_KEY || !process.env.MONGO_URI) {
+  dotenv.config({ path: path.resolve(__dirname, "../.env") });
+}
+
+// Minimal masked diagnostics
+const mask = (val) => (val ? `${val.length} chars, ends ${val.slice(-4)}` : "missing");
+console.log("ENV check:", {
+  OPENAI_API_KEY: mask(process.env.OPENAI_API_KEY || ""),
+  MONGO_URI: process.env.MONGO_URI ? "present" : "missing"
+});
+
+// ------------------ EXPRESS APP ------------------
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
+// ------------------ DATABASE ------------------
 connectDB();
 
-// ---------------- API ROUTES ----------------
+// ------------------ API ROUTES ------------------
 app.use("/api/journal", journalRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/emergency", emergencyRoutes);
 app.use("/api/vitals", vitalsRoutes);
 app.use("/api/google-fit", googleFitRoutes);
 
-// ---------------- FRONTEND SERVING ----------------
-// Adjust the folder name if your front-end is elsewhere
+// ------------------ FRONTEND SERVE ------------------
+// Adjust path to your frontend folder
 const frontendPath = path.join(__dirname, "../frontend");
 app.use(express.static(frontendPath));
 
-// Fallback to index.html for SPA routing
+// Fallback: serve index.html for SPA routes
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// ---------------- HEALTH CHECK ----------------
-app.get("/ping", (req, res) => {
-  res.send("✅ Server is alive");
-});
+// ------------------ HEALTH CHECK ------------------
+app.get("/ping", (req, res) => res.send("✅ Server is alive"));
 
-// ---------------- START SERVER ----------------
+// ------------------ START SERVER ------------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🌐 Server running on http://localhost:${PORT}`));
+
