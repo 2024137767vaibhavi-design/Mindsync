@@ -328,121 +328,93 @@ function renderAssessment(assessment) {
 }
 
 // ==================== GOOGLE FIT ====================
-const CLIENT_ID="967470420573-ud9hi0usoshj70rormfopg35cfe81m6d.apps.googleusercontent.com";
-const SCOPES="https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.body.read";
+const CLIENT_ID = "967470420573-ud9hi0usoshj70rormfopg35cfe81m6d.apps.googleusercontent.com";
+const SCOPES = "https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.body.read";
 
-function handleClientLoad(){ gapi.load('client:auth2', initClient); }
+let isGoogleFitConnected = false;
 
-function initClient(){
-  gapi.client.init({ clientId: CLIENT_ID, scope: SCOPES }).then(()=>{
-    const authInstance=gapi.auth2.getAuthInstance();
-    if(!authInstance.isSignedIn.get()){ authInstance.signIn().then(()=>fetchVitals()); } else fetchVitals();
+// Triggered by button click
+function handleClientLoad() {
+  gapi.load('client:auth2', initClient);
+}
+
+function initClient() {
+  gapi.client.init({ clientId: CLIENT_ID, scope: SCOPES }).then(() => {
+    const authInstance = gapi.auth2.getAuthInstance();
+    if (!authInstance.isSignedIn.get()) {
+      authInstance.signIn().then(() => {
+        isGoogleFitConnected = true;
+        fetchVitals();
+        updateConnectButton();
+      }).catch(err => {
+        console.error("Google Fit sign-in failed:", err);
+        alert("⚠️ Google Fit connection failed.");
+      });
+    } else {
+      isGoogleFitConnected = true;
+      fetchVitals();
+      updateConnectButton();
+    }
   });
 }
 
+function updateConnectButton() {
+  const btn = document.getElementById("connectGoogleFit");
+  if (btn) {
+    btn.textContent = isGoogleFitConnected ? "Google Fit Connected ✅" : "Connect Google Fit";
+    btn.disabled = isGoogleFitConnected;
+  }
+}
+
 async function fetchVitals() {
+  if (!isGoogleFitConnected) return;
+
   try {
     await gapi.client.load('fitness','v1');
-    const now=Date.now();
-    const oneWeekAgo=now-7*24*60*60*1000;
+    const now = Date.now();
+    const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
 
-    const metrics={ heartRate:"com.google.heart_rate.bpm", steps:"com.google.step_count.delta", sleepHours:"com.google.sleep.duration", bp:"com.google.blood_pressure", temperature:"com.google.body.temperature" };
-    currentVitals={};
+    const metrics = {
+      heartRate:"com.google.heart_rate.bpm",
+      steps:"com.google.step_count.delta",
+      sleepHours:"com.google.sleep.duration",
+      bp:"com.google.blood_pressure",
+      temperature:"com.google.body.temperature"
+    };
 
-    for(const key in metrics){
-      const body={ aggregateBy:[{dataTypeName:metrics[key]}], bucketByTime:{durationMillis:86400000}, startTimeMillis:oneWeekAgo, endTimeMillis:now };
-      const response=await gapi.client.fitness.users.dataset.aggregate({ userId:"me", resource:body });
-      let value="--";
-      try{
-        const points=response.result.bucket?.[0]?.dataset?.[0]?.point;
-        if(points && points.length>0){
-          const valObj=points[points.length-1].value[0];
-          value=valObj.fpVal??valObj.intVal??valObj.stringVal??"--";
+    currentVitals = {};
+
+    for (const key in metrics) {
+      const body = { aggregateBy:[{dataTypeName:metrics[key]}], bucketByTime:{durationMillis:86400000}, startTimeMillis:oneWeekAgo, endTimeMillis:now };
+      const response = await gapi.client.fitness.users.dataset.aggregate({ userId:"me", resource:body });
+      let value = "--";
+      try {
+        const points = response.result.bucket?.[0]?.dataset?.[0]?.point;
+        if (points && points.length > 0) {
+          const valObj = points[points.length-1].value[0];
+          value = valObj.fpVal ?? valObj.intVal ?? valObj.stringVal ?? "--";
         }
-      }catch{ value="--"; }
+      } catch { value = "--"; }
 
-      if(key==="sleepHours") value=(value/3600000).toFixed(1);
-      if(key==="bp" && value==="--") value="120/80";
+      if (key === "sleepHours") value = (value/3600000).toFixed(1);
+      if (key === "bp" && value === "--") value = "120/80";
 
-      currentVitals[key]=value;
-      const el=document.getElementById(key);
-      if(el) el.textContent=value;
+      currentVitals[key] = value;
+      const el = document.getElementById(key);
+      if (el) el.textContent = value;
     }
 
     console.log("Vitals fetched from Google Fit:", currentVitals);
     renderAssessment(generateAssessmentFromVitals());
-  } catch(err){ console.error("Error fetching Google Fit vitals:",err); }
-}
-
-// Example function to generate mock assessment from vitals
-// Example function to generate assessment from real vitals
-function generateAssessmentFromVitals() {
-  const vitals = currentVitals || {};
-  const notes = [];
-  let riskScore = 0;
-
-  // ---- Heart Rate ----
-  let hrLevel = "normal", hrScore = Number(vitals.heartRate) || 0;
-  if (hrScore > 100) { hrLevel = "high"; riskScore += 20; notes.push("Your heart rate is high. Consider calming activities."); }
-  else if (hrScore < 50) { hrLevel = "low"; riskScore += 15; notes.push("Your heart rate is low. Monitor regularly."); }
-  else { notes.push("Heart rate within healthy range."); }
-
-  // ---- Blood Pressure ----
-  let bpLevel = "normal", bpScore = 0;
-  if (vitals.bp && typeof vitals.bp === "string") {
-    const [sys, dia] = vitals.bp.split("/").map(Number);
-    bpScore = (sys || 120);
-    if (sys >= 140 || dia >= 90) { bpLevel = "high"; riskScore += 25; notes.push("High blood pressure detected."); }
-    else if (sys <= 90 || dia <= 60) { bpLevel = "low"; riskScore += 20; notes.push("Low blood pressure detected."); }
-    else { notes.push("Blood pressure is in normal range."); }
+  } catch (err) {
+    console.error("Error fetching Google Fit vitals:", err);
   }
-
-  // ---- Sleep ----
-  let sleepLevel = "normal", sleepScore = Number(vitals.sleepHours) || 0;
-  if (sleepScore < 6) { sleepLevel = "short"; riskScore += 20; notes.push("You are not getting enough sleep."); }
-  else if (sleepScore > 10) { sleepLevel = "long"; riskScore += 15; notes.push("Oversleeping may cause fatigue."); }
-  else if (sleepScore > 0) { notes.push("Sleep duration is healthy."); }
-
-  // ---- Stress ----
-  let stressLevel = "moderate", stressScore = Number(vitals.stressLevel) || 0;
-  if (stressScore >= 70) { stressLevel = "high"; riskScore += 25; notes.push("Stress levels are high. Practice relaxation."); }
-  else if (stressScore > 0 && stressScore <= 30) { stressLevel = "low"; notes.push("Stress levels are low."); }
-  else if (stressScore > 0) { notes.push("Stress levels are moderate."); }
-
-  // ---- Temperature ----
-  let tempLevel = "normal", tempScore = Number(vitals.temperature) || 0;
-  if (tempScore >= 38) { tempLevel = "fever"; riskScore += 30; notes.push("Fever detected. Stay hydrated and rest."); }
-  else if (tempScore > 0 && tempScore <= 35.5) { tempLevel = "low"; riskScore += 20; notes.push("Low body temperature detected."); }
-  else if (tempScore > 0) { notes.push("Body temperature is normal."); }
-
-  // ---- Energy ----
-  let energyLevel = "balanced", energyScore = Number(vitals.energy) || 0;
-  if (energyScore <= 30 && energyScore > 0) { energyLevel = "low"; riskScore += 15; notes.push("Low energy reported. Take a break."); }
-  else if (energyScore >= 80) { energyLevel = "high"; notes.push("Energy levels are high."); }
-  else if (energyScore > 0) { notes.push("Energy levels are balanced."); }
-
-  // ---- Risk Categorization ----
-  let overall = { level: "low", score: riskScore };
-  if (riskScore >= 70) overall.level = "high";
-  else if (riskScore >= 40) overall.level = "moderate";
-
-  return {
-    overall,
-    categories: {
-      anxiety: { level: stressLevel, score: stressScore },
-      depression: { level: sleepLevel, score: sleepScore },
-      stress: { level: stressLevel, score: stressScore },
-      nervousBreakdown: { level: hrLevel, score: hrScore },
-      selfHarmRisk: { level: bpLevel, score: bpScore }
-    },
-    notes
-  };
 }
-
 
 
 // Initialize Google API
 handleClientLoad();
+
 
 
 
