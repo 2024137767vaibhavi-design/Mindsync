@@ -2,29 +2,13 @@ let currentVitals = {};
 let lineChartInstance;
 let barChartInstance;
 
-const BASE_URL = "https://mindsync-tu30.onrender.com"; // Deployed backend URL
-
+// ==================== DOMContentLoaded ====================
 document.addEventListener("DOMContentLoaded", () => {
 
-  // ================== VITALS DASHBOARD ==================
-  fetch(`${BASE_URL}/api/vitals`)
-    .then(res => res.json())
-    .then(vitals => {
-      currentVitals = vitals;
-      for (let key in vitals) {
-        const el = document.getElementById(key);
-        if (el) el.textContent = vitals[key];
-      }
+  // ----------------- VITALS DASHBOARD -----------------
+  handleClientLoad(); // Google Fit authentication & fetch
 
-      // Fetch assessment after vitals
-      fetch(`${BASE_URL}/api/vitals/assessment`)
-        .then(res => res.json())
-        .then(assessment => renderAssessment(assessment))
-        .catch(err => console.error("Error fetching assessment:", err));
-    })
-    .catch(err => console.error("Error fetching vitals:", err));
-
-  // ================== JOURNAL ENTRY ==================
+  // ----------------- JOURNAL ENTRY -----------------
   const titleInput = document.getElementById("journalTitle");
   const dateInput = document.getElementById("journalDate");
   const entryInput = document.getElementById("journalEntry");
@@ -34,7 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let selectedMood = null;
 
-  // Mood selection
   moodButtons.forEach(btn => {
     btn.addEventListener("click", () => {
       moodButtons.forEach(b => b.classList.remove("selected"));
@@ -43,34 +26,30 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Save journal entry
   saveBtn?.addEventListener("click", async () => {
     const title = titleInput?.value.trim() || "(Untitled)";
     const date = dateInput?.value || new Date().toISOString().split("T")[0];
     const content = entryInput?.value.trim();
     const mood = selectedMood || "😐";
 
-    if (!content) return alert("Please write something.");
+    if (!content) { alert("Please write something."); return; }
 
     const entry = { title, date, mood, content };
 
     try {
-      const response = await fetch(`${BASE_URL}/api/journal`, {
+      const response = await fetch("http://127.0.0.1:5000/api/journal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(entry),
+        body: JSON.stringify(entry)
       });
 
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
       await response.json();
-      alert(`✅ Saved entry for ${date} with mood ${mood}`);
 
-      titleInput.value = "";
-      dateInput.value = "";
-      entryInput.value = "";
+      alert(`✅ Saved entry for ${date} with mood ${mood}`);
+      titleInput.value = dateInput.value = entryInput.value = "";
       moodButtons.forEach(b => b.classList.remove("selected"));
       selectedMood = null;
-
       loadJournalHistory();
     } catch (err) {
       console.error("Error saving journal entry:", err);
@@ -78,14 +57,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Load journal history
   async function loadJournalHistory() {
     if (!historyContainer) return;
-
     try {
-      const res = await fetch(`${BASE_URL}/api/journal`);
+      const res = await fetch("http://127.0.0.1:5000/api/journal");
       const entries = await res.json();
-
       historyContainer.innerHTML = "";
 
       entries.forEach(entry => {
@@ -105,17 +81,15 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!e.target.classList.contains("delete-btn")) openJournalEntry(entry);
         });
 
-        const deleteBtn = card.querySelector(".delete-btn");
-        deleteBtn.addEventListener("click", (e) => {
+        card.querySelector(".delete-btn").addEventListener("click", (e) => {
           e.stopPropagation();
           deleteJournalEntry(entry._id, card);
         });
 
         historyContainer.appendChild(card);
       });
-    } catch (err) {
-      console.error("Error loading journal history:", err);
-    }
+
+    } catch (err) { console.error("Error loading journal history:", err); }
   }
 
   function openJournalEntry(entry) {
@@ -134,42 +108,35 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       </div>
     `;
-
     document.body.appendChild(modal);
     document.body.style.overflow = "hidden";
 
     modal.querySelector(".close-modal").addEventListener("click", () => {
-      document.body.removeChild(modal);
+      modal.remove();
       document.body.style.overflow = "auto";
     });
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        document.body.removeChild(modal);
-        document.body.style.overflow = "auto";
-      }
-    });
+    modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); document.body.style.overflow = "auto"; });
   }
 
   async function deleteJournalEntry(id, cardElement) {
     if (!confirm("Are you sure you want to delete this journal entry?")) return;
-
     try {
-      const response = await fetch(`${BASE_URL}/api/journal/${id}`, { method: "DELETE" });
+      const response = await fetch(`http://127.0.0.1:5000/api/journal/${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      await response.json();
       cardElement.remove();
       alert("✅ Journal entry deleted successfully");
-    } catch (err) {
-      console.error("Error deleting journal entry:", err);
-      alert("⚠️ Failed to delete journal entry.");
-    }
+    } catch (err) { console.error(err); alert(`⚠️ Failed to delete: ${err.message}`); }
   }
 
   loadJournalHistory();
 
-  // ================== EMERGENCY CONTACTS ==================
+  // ----------------- EMERGENCY CONTACTS & SOS -----------------
   const contactForm = document.getElementById("contactForm");
   const contactList = document.getElementById("contactList");
+  const sosBtn = document.querySelector(".sos-btn");
+  const dismissBtn = document.querySelector(".dismiss-btn");
+  const countdown = document.getElementById("countdown");
 
   if (contactForm) {
     contactForm.addEventListener("submit", e => {
@@ -179,26 +146,18 @@ document.addEventListener("DOMContentLoaded", () => {
         phone: document.getElementById("contactPhone").value,
         relationship: document.getElementById("contactRelation").value
       };
-
-      fetch(`${BASE_URL}/api/emergency/contacts`, {
+      fetch("http://127.0.0.1:5000/api/emergency/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contact)
       })
-        .then(res => res.json())
-        .then(data => {
-          alert("Contact saved!");
-          contactForm.reset();
-          loadContacts();
-        })
-        .catch(err => {
-          console.error("Error saving contact:", err);
-          alert("Failed to save contact.");
-        });
+      .then(res => res.json())
+      .then(() => { alert("Contact saved!"); contactForm.reset(); loadContacts(); })
+      .catch(err => { console.error(err); alert("Failed to save contact."); });
     });
 
     function loadContacts() {
-      fetch(`${BASE_URL}/api/emergency/contacts`)
+      fetch("http://127.0.0.1:5000/api/emergency/contacts")
         .then(res => res.json())
         .then(contacts => {
           contactList.innerHTML = "";
@@ -210,11 +169,34 @@ document.addEventListener("DOMContentLoaded", () => {
           });
         });
     }
-
     loadContacts();
   }
 
-  // ================== CHATBOT ==================
+  if (sosBtn) {
+    sosBtn.addEventListener("click", () => {
+      let seconds = 5;
+      countdown.textContent = `Sending SOS in ${seconds} seconds...`;
+      const timer = setInterval(() => {
+        seconds--;
+        countdown.textContent = `Sending SOS in ${seconds} seconds...`;
+        if (seconds === 0) { clearInterval(timer); sendSOS(); }
+      }, 1000);
+    });
+  }
+
+  if (dismissBtn) dismissBtn.addEventListener("click", () => { countdown.textContent = "SOS dismissed."; });
+
+  function sendSOS() {
+    fetch("http://127.0.0.1:5000/api/emergency/contacts")
+      .then(res => res.json())
+      .then(contacts => {
+        contacts.forEach(contact => console.log(`🚨 SOS sent to ${contact.name} at ${contact.phone}`));
+        countdown.textContent = "SOS sent to all emergency contacts.";
+      })
+      .catch(err => { console.error(err); countdown.textContent = "Failed to send SOS."; });
+  }
+
+  // ----------------- VOICE CHAT -----------------
   const chatBox = document.getElementById("chatBox");
   const chatInput = document.getElementById("chatInput");
   const sendBtn = document.getElementById("sendBtn");
@@ -231,57 +213,34 @@ document.addEventListener("DOMContentLoaded", () => {
   async function sendChatMessage() {
     const message = chatInput.value.trim();
     if (!message) return;
-
     appendMessage(message, "user");
     chatInput.value = "";
-
     try {
-      const response = await fetch(`${BASE_URL}/api/chatbot`, {
+      const response = await fetch("http://127.0.0.1:5000/api/chatbot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message })
       });
       const data = await response.json();
       appendMessage(data.reply, "bot");
-    } catch (err) {
-      console.error("Chatbot error:", err);
-      appendMessage("⚠️ Something went wrong. Try again.", "bot");
-    }
+    } catch (err) { console.error(err); appendMessage("⚠️ Something went wrong.", "bot"); }
   }
 
   function startVoice() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("⚠️ Your browser does not support voice input.");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
     recognition.start();
-
-    recognition.onresult = function (event) {
-      const transcript = event.results[0][0].transcript;
-      chatInput.value = transcript;
-      sendChatMessage();
-    };
-
-    recognition.onerror = function (event) {
-      console.error("Speech recognition error:", event.error);
-      alert("Voice input failed. Try again!");
-    };
+    recognition.onresult = event => { chatInput.value = event.results[0][0].transcript; sendChatMessage(); };
+    recognition.onerror = event => { console.error(event.error); alert("Voice input failed!"); };
   }
 
   sendBtn?.addEventListener("click", sendChatMessage);
   chatInput?.addEventListener("keydown", e => { if (e.key === "Enter") sendChatMessage(); });
   voiceBtn?.addEventListener("click", startVoice);
 
-}); // DOMContentLoaded
+});
 
-// ================== VITALS GRAPHS & ASSESSMENT ==================
+// ==================== GRAPH MODAL ====================
 function showGraph(vitalKey) {
   const modal = document.getElementById("graphModal");
   const title = document.getElementById("graphTitle");
@@ -290,119 +249,146 @@ function showGraph(vitalKey) {
   const analysisEl = document.getElementById("graphAnalysis");
   if (!modal || !title || !lineCanvas || !barCanvas) return;
 
-  const titles = {
-    heartRate: "Heart Rate",
-    stressLevel: "Stress Level",
-    sleepHours: "Sleep Hours",
-    bp: "Blood Pressure",
-    ecg: "ECG",
-    temperature: "Body Temperature",
-    energy: "Energy Level"
-  };
-
+  const titles = { heartRate:"Heart Rate", stressLevel:"Stress Level", sleepHours:"Sleep Hours", bp:"Blood Pressure", ecg:"ECG", temperature:"Body Temperature", energy:"Energy Level" };
   title.textContent = `📈 ${titles[vitalKey]} Trends`;
 
   const todayValue = currentVitals[vitalKey] || "--";
-  let numericValue = 70;
+  let numericValue = parseFloat(todayValue.replace(/[^\d.]/g, "")) || 70;
+
   if (vitalKey === "bp") {
     const parts = todayValue.split("/").map(p => parseFloat(p));
     numericValue = parts[0] || 120;
-  } else {
-    const parsed = parseFloat(todayValue.replace(/[^\d.]/g, ""));
-    if (!isNaN(parsed)) numericValue = parsed;
   }
 
   const labels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-  const data = Array.from({length:6}, () => Math.floor(Math.random()*20 + numericValue-10)).concat(numericValue);
+  const data = Array.from({ length: 6 }, () => Math.floor(Math.random()*20+numericValue-10)).concat(numericValue);
+
+  function generateAnalysis(key, value) {
+    try {
+      if (key==="bp") { const [sys,dia] = todayValue.split("/").map(v=>parseInt(v)); if(sys>=140||dia>=90) return "High BP"; if(sys<=90||dia<=60) return "Low BP"; return "BP normal"; }
+      if (key==="heartRate") return value>100?"High HR":value<50?"Low HR":"Normal HR";
+      if (key==="temperature") return value>=38?"Fever":value<=35.5?"Low temp":"Normal temp";
+      if (key==="sleepHours") return value<6?"Short sleep":value>10?"Long sleep":"Healthy sleep";
+      if (key==="stressLevel") return value>=70?"High stress":value<=30?"Low stress":"Moderate stress";
+      if (key==="energy") return value<=30?"Low energy":value>=80?"High energy":"Balanced energy";
+      if (key==="ecg") return "ECG reading.";
+      return "Analysis unavailable.";
+    } catch { return "Analysis unavailable."; }
+  }
 
   if (lineChartInstance) lineChartInstance.destroy();
   if (barChartInstance) barChartInstance.destroy();
 
   lineChartInstance = new Chart(lineCanvas, {
-    type: "line",
-    data: { labels, datasets: [{ label: titles[vitalKey], data, borderColor:"#a86fa0", backgroundColor:"rgba(199,164,209,0.2)", fill:true, tension:0.3 }]},
-    options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}, x:{}} }
+    type:"line",
+    data:{ labels, datasets:[{ label: titles[vitalKey], data, borderColor:"#a86fa0", backgroundColor:"rgba(199,164,209,0.2)", fill:true, tension:0.3 }]},
+    options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true }, x:{} } }
   });
 
   barChartInstance = new Chart(barCanvas, {
-    type: "bar",
-    data: { labels, datasets: [{ label: titles[vitalKey], data, backgroundColor:"#c7a4d1", borderRadius:6 }]},
-    options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}, x:{}} }
+    type:"bar",
+    data:{ labels, datasets:[{ label: titles[vitalKey], data, backgroundColor:"#c7a4d1", borderRadius:6 }]},
+    options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true }, x:{} } }
   });
 
-  if (analysisEl) {
-    const analysisText = `Health insight: ${generateAnalysis(vitalKey, numericValue)}`;
-    analysisEl.textContent = analysisText;
-  }
-
+  if (analysisEl) analysisEl.textContent = `Health insight: ${generateAnalysis(vitalKey,numericValue)}`;
   modal.classList.add("show");
   document.body.style.overflow = "hidden";
 }
 
 function closeGraph(e) {
-  if (e && e.target.id !== "graphModal" && e.target.className !== "close") return;
+  if (e && e.target.id!=="graphModal" && e.target.className!=="close") return;
   const modal = document.getElementById("graphModal");
-  if (modal) {
-    modal.classList.remove("show");
-    document.body.style.overflow = "auto";
-  }
+  if(modal) modal.classList.remove("show");
+  document.body.style.overflow = "auto";
 }
 
-// ================== ASSESSMENT ==================
+// ==================== ASSESSMENT ====================
 function renderAssessment(assessment) {
   try {
-    const overallEl = document.getElementById("assessmentOverall");
-    const listEl = document.getElementById("assessmentList");
-    const notesEl = document.getElementById("assessmentNotes");
-    if (!overallEl || !listEl || !notesEl) return;
+    const overallEl=document.getElementById("assessmentOverall");
+    const listEl=document.getElementById("assessmentList");
+    const notesEl=document.getElementById("assessmentNotes");
+    if(!overallEl||!listEl||!notesEl) return;
+    const {overall,categories,notes}=assessment||{};
+    if(overall) overallEl.textContent=`Overall risk: ${overall.level.toUpperCase()} (${overall.score})`;
 
-    const { overall, categories, notes } = assessment || {};
-    if (overall) overallEl.textContent = `Overall risk: ${overall.level.toUpperCase()} (${overall.score})`;
-
-    listEl.innerHTML = "";
-    const ordered = [
-      ["anxiety", categories?.anxiety],
-      ["depression", categories?.depression],
-      ["stress", categories?.stress],
-      ["nervousBreakdown", categories?.nervousBreakdown],
-      ["selfHarmRisk", categories?.selfHarmRisk]
-    ];
-
-    ordered.forEach(([key,data]) => {
-      if (!data) return;
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      const label = key==="nervousBreakdown"?"Breakdown":key==="selfHarmRisk"?"Self-harm":key.charAt(0).toUpperCase()+key.slice(1);
-      chip.textContent = `${label}: ${data.level} (${data.score})`;
+    listEl.innerHTML="";
+    const ordered=[["anxiety",categories?.anxiety],["depression",categories?.depression],["stress",categories?.stress],["nervousBreakdown",categories?.nervousBreakdown],["selfHarmRisk",categories?.selfHarmRisk]];
+    ordered.forEach(([key,data])=>{
+      if(!data) return;
+      const chip=document.createElement("span"); chip.className="chip";
+      const label=key==="nervousBreakdown"?"Breakdown":key==="selfHarmRisk"?"Self-harm":key.charAt(0).toUpperCase()+key.slice(1);
+      chip.textContent=`${label}: ${data.level} (${data.score})`;
       listEl.appendChild(chip);
     });
 
-    notesEl.innerHTML = "";
-    (notes||[]).forEach(n => {
-      const li = document.createElement("li");
-      li.textContent = n;
-      notesEl.appendChild(li);
-    });
-  } catch(e){console.error("Render assessment error:",e);}
+    notesEl.innerHTML=""; (notes||[]).forEach(n=>{ const li=document.createElement("li"); li.textContent=n; notesEl.appendChild(li); });
+  } catch(e){ console.error("Render assessment error:",e); }
 }
 
-// ================== HEALTH ANALYSIS FOR GRAPHS ==================
-function generateAnalysis(key, value) {
-  try {
-    if (key==="bp") {
-      const today = currentVitals.bp || "120/80";
-      const [sys,dia] = today.split("/").map(v=>parseInt(v,10));
-      if (!isFinite(sys)||!isFinite(dia)) return "Blood pressure data unavailable.";
-      if (sys>=140||dia>=90) return "Elevated blood pressure detected. Consult doctor if persistent.";
-      if (sys<=90||dia<=60) return "Low blood pressure trend. Monitor hydration.";
-      return "Blood pressure appears normal.";
-    }
-    if (key==="heartRate") return value>100?"High heart rate trend. Rest advised.":value<50?"Low heart rate. Consult if symptomatic.":"Heart rate normal.";
-    if (key==="temperature") return value>=38?"Fever detected. Stay hydrated.":value<=35.5?"Low temperature. Keep warm.":"Temperature normal.";
-    if (key==="sleepHours") return value<6?"Short sleep. Aim 7–9 hours.":value>10?"Long sleep. Monitor fatigue.":"Sleep duration healthy.";
-    if (key==="stressLevel") return value>=70?"High stress. Take breaks.":value<=30?"Low stress. Keep it up!":"Moderate stress.";
-    if (key==="energy") return value<=30?"Low energy. Snack & light activity.":value>=80?"High energy. Good for tasks/exercise.":"Balanced energy.";
-    if (key==="ecg") return "ECG metric displayed. Consult clinician if concerned.";
-    return "Analysis unavailable.";
-  } catch(_){ return "Analysis unavailable due to data format.";}
+// ==================== GOOGLE FIT ====================
+const CLIENT_ID="YOUR_CLIENT_ID_HERE";
+const SCOPES="https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.body.read";
+
+function handleClientLoad(){ gapi.load('client:auth2', initClient); }
+
+function initClient(){
+  gapi.client.init({ clientId: CLIENT_ID, scope: SCOPES }).then(()=>{
+    const authInstance=gapi.auth2.getAuthInstance();
+    if(!authInstance.isSignedIn.get()){ authInstance.signIn().then(()=>fetchVitals()); } else fetchVitals();
+  });
 }
+
+async function fetchVitals() {
+  try {
+    await gapi.client.load('fitness','v1');
+    const now=Date.now();
+    const oneWeekAgo=now-7*24*60*60*1000;
+
+    const metrics={ heartRate:"com.google.heart_rate.bpm", steps:"com.google.step_count.delta", sleepHours:"com.google.sleep.duration", bp:"com.google.blood_pressure", temperature:"com.google.body.temperature" };
+    currentVitals={};
+
+    for(const key in metrics){
+      const body={ aggregateBy:[{dataTypeName:metrics[key]}], bucketByTime:{durationMillis:86400000}, startTimeMillis:oneWeekAgo, endTimeMillis:now };
+      const response=await gapi.client.fitness.users.dataset.aggregate({ userId:"me", resource:body });
+      let value="--";
+      try{
+        const points=response.result.bucket?.[0]?.dataset?.[0]?.point;
+        if(points && points.length>0){
+          const valObj=points[points.length-1].value[0];
+          value=valObj.fpVal??valObj.intVal??valObj.stringVal??"--";
+        }
+      }catch{ value="--"; }
+
+      if(key==="sleepHours") value=(value/3600000).toFixed(1);
+      if(key==="bp" && value==="--") value="120/80";
+
+      currentVitals[key]=value;
+      const el=document.getElementById(key);
+      if(el) el.textContent=value;
+    }
+
+    console.log("Vitals fetched from Google Fit:", currentVitals);
+    renderAssessment(generateAssessmentFromVitals());
+  } catch(err){ console.error("Error fetching Google Fit vitals:",err); }
+}
+
+// Example function to generate mock assessment from vitals
+function generateAssessmentFromVitals(){
+  return {
+    overall:{ level:"moderate", score:50 },
+    categories:{
+      anxiety:{ level:"low", score:10 },
+      depression:{ level:"moderate", score:30 },
+      stress:{ level:"moderate", score:25 },
+      nervousBreakdown:{ level:"low", score:5 },
+      selfHarmRisk:{ level:"low", score:2 }
+    },
+    notes:["Vitals are within acceptable ranges.","Maintain regular sleep and activity patterns."]
+  };
+}
+
+// Initialize Google API
+handleClientLoad();
+
