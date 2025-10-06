@@ -45,9 +45,14 @@ app.use("/api/emergency", emergencyRoutes);
 app.use("/api/vitals", vitalsRoutes);
 app.use("/api/google-fit", googleFitRoutes);
 
+app.get("/", (req, res) => {
+  res.send("🚀 Server is running! Go to /api/googlefit to test Google Fit API.");
+});
+
 app.get("/ping", (req, res) => {
   res.send("✅ Server is alive");
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🌐 Server running on http://localhost:${PORT}`));
+
