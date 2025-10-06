@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const entry = { title, date, mood, content };
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/journal", {
+      const response = await fetch("https://mindsync-tu30.onrender.com/api/journal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(entry)
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadJournalHistory() {
     if (!historyContainer) return;
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/journal");
+      const res = await fetch("https://mindsync-tu30.onrender.com/api/journal");
       const entries = await res.json();
       historyContainer.innerHTML = "";
 
@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function deleteJournalEntry(id, cardElement) {
     if (!confirm("Are you sure you want to delete this journal entry?")) return;
     try {
-      const response = await fetch(`http://127.0.0.1:5000/api/journal/${id}`, { method: "DELETE" });
+      const response = await fetch(`https://mindsync-tu30.onrender.com/api/journal/${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
       await response.json();
       cardElement.remove();
@@ -146,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
         phone: document.getElementById("contactPhone").value,
         relationship: document.getElementById("contactRelation").value
       };
-      fetch("http://127.0.0.1:5000/api/emergency/contacts", {
+      fetch("https://mindsync-tu30.onrender.com/api/emergency/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contact)
@@ -157,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function loadContacts() {
-      fetch("http://127.0.0.1:5000/api/emergency/contacts")
+      fetch("https://mindsync-tu30.onrender.com/api/emergency/contacts")
         .then(res => res.json())
         .then(contacts => {
           contactList.innerHTML = "";
@@ -187,7 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (dismissBtn) dismissBtn.addEventListener("click", () => { countdown.textContent = "SOS dismissed."; });
 
   function sendSOS() {
-    fetch("http://127.0.0.1:5000/api/emergency/contacts")
+    fetch("https://mindsync-tu30.onrender.com/api/emergency/contacts")
       .then(res => res.json())
       .then(contacts => {
         contacts.forEach(contact => console.log(`🚨 SOS sent to ${contact.name} at ${contact.phone}`));
@@ -216,7 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
     appendMessage(message, "user");
     chatInput.value = "";
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/chatbot", {
+      const response = await fetch("https://mindsync-tu30.onrender.com/api/chatbot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message })
@@ -328,7 +328,7 @@ function renderAssessment(assessment) {
 }
 
 // ==================== GOOGLE FIT ====================
-const CLIENT_ID="YOUR_CLIENT_ID_HERE";
+const CLIENT_ID="967470420573-ud9hi0usoshj70rormfopg35cfe81m6d.apps.googleusercontent.com";
 const SCOPES="https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.body.read";
 
 function handleClientLoad(){ gapi.load('client:auth2', initClient); }
@@ -375,20 +375,103 @@ async function fetchVitals() {
 }
 
 // Example function to generate mock assessment from vitals
-function generateAssessmentFromVitals(){
+// Example function to generate assessment from real vitals
+function generateAssessmentFromVitals() {
+  const vitals = currentVitals || {};
+  const notes = [];
+  let riskScore = 0;
+
+  // ---- Heart Rate ----
+  let hrLevel = "normal";
+  if (vitals.heartRate > 100) {
+    hrLevel = "high"; riskScore += 20; notes.push("Your heart rate is high. Consider calming activities.");
+  } else if (vitals.heartRate < 50) {
+    hrLevel = "low"; riskScore += 15; notes.push("Your heart rate is low. Monitor regularly.");
+  } else {
+    notes.push("Heart rate within healthy range.");
+  }
+
+  // ---- Blood Pressure ----
+  let bpLevel = "normal";
+  if (vitals.bp && typeof vitals.bp === "string") {
+    const [sys, dia] = vitals.bp.split("/").map(Number);
+    if (sys >= 140 || dia >= 90) {
+      bpLevel = "high"; riskScore += 25; notes.push("High blood pressure detected.");
+    } else if (sys <= 90 || dia <= 60) {
+      bpLevel = "low"; riskScore += 20; notes.push("Low blood pressure detected.");
+    } else {
+      notes.push("Blood pressure is in normal range.");
+    }
+  }
+
+  // ---- Sleep ----
+  let sleepLevel = "normal";
+  if (vitals.sleepHours) {
+    if (vitals.sleepHours < 6) {
+      sleepLevel = "short"; riskScore += 20; notes.push("You are not getting enough sleep.");
+    } else if (vitals.sleepHours > 10) {
+      sleepLevel = "long"; riskScore += 15; notes.push("Oversleeping may cause fatigue.");
+    } else {
+      notes.push("Sleep duration is healthy.");
+    }
+  }
+
+  // ---- Stress ----
+  let stressLevel = "moderate";
+  if (vitals.stressLevel) {
+    if (vitals.stressLevel >= 70) {
+      stressLevel = "high"; riskScore += 25; notes.push("Stress levels are high. Practice relaxation.");
+    } else if (vitals.stressLevel <= 30) {
+      stressLevel = "low"; notes.push("Stress levels are low.");
+    } else {
+      notes.push("Stress levels are moderate.");
+    }
+  }
+
+  // ---- Temperature ----
+  let tempLevel = "normal";
+  if (vitals.temperature) {
+    if (vitals.temperature >= 38) {
+      tempLevel = "fever"; riskScore += 30; notes.push("Fever detected. Stay hydrated and rest.");
+    } else if (vitals.temperature <= 35.5) {
+      tempLevel = "low"; riskScore += 20; notes.push("Low body temperature detected.");
+    } else {
+      notes.push("Body temperature is normal.");
+    }
+  }
+
+  // ---- Energy ----
+  let energyLevel = "balanced";
+  if (vitals.energy) {
+    if (vitals.energy <= 30) {
+      energyLevel = "low"; riskScore += 15; notes.push("Low energy reported. Take a break.");
+    } else if (vitals.energy >= 80) {
+      energyLevel = "high"; notes.push("Energy levels are high.");
+    } else {
+      notes.push("Energy levels are balanced.");
+    }
+  }
+
+  // ---- Risk Categorization ----
+  let overall = { level: "low", score: riskScore };
+  if (riskScore >= 70) overall.level = "high";
+  else if (riskScore >= 40) overall.level = "moderate";
+
   return {
-    overall:{ level:"moderate", score:50 },
-    categories:{
-      anxiety:{ level:"low", score:10 },
-      depression:{ level:"moderate", score:30 },
-      stress:{ level:"moderate", score:25 },
-      nervousBreakdown:{ level:"low", score:5 },
-      selfHarmRisk:{ level:"low", score:2 }
+    overall,
+    categories: {
+      anxiety: { level: stressLevel, score: vitals.stressLevel || 0 },
+      depression: { level: sleepLevel, score: vitals.sleepHours || 0 },
+      stress: { level: stressLevel, score: vitals.stressLevel || 0 },
+      nervousBreakdown: { level: hrLevel, score: vitals.heartRate || 0 },
+      selfHarmRisk: { level: bpLevel, score: vitals.bp || 0 }
     },
-    notes:["Vitals are within acceptable ranges.","Maintain regular sleep and activity patterns."]
+    notes
   };
 }
 
+
 // Initialize Google API
 handleClientLoad();
+
 
