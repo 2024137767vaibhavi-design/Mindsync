@@ -382,75 +382,44 @@ function generateAssessmentFromVitals() {
   let riskScore = 0;
 
   // ---- Heart Rate ----
-  let hrLevel = "normal";
-  if (vitals.heartRate > 100) {
-    hrLevel = "high"; riskScore += 20; notes.push("Your heart rate is high. Consider calming activities.");
-  } else if (vitals.heartRate < 50) {
-    hrLevel = "low"; riskScore += 15; notes.push("Your heart rate is low. Monitor regularly.");
-  } else {
-    notes.push("Heart rate within healthy range.");
-  }
+  let hrLevel = "normal", hrScore = Number(vitals.heartRate) || 0;
+  if (hrScore > 100) { hrLevel = "high"; riskScore += 20; notes.push("Your heart rate is high. Consider calming activities."); }
+  else if (hrScore < 50) { hrLevel = "low"; riskScore += 15; notes.push("Your heart rate is low. Monitor regularly."); }
+  else { notes.push("Heart rate within healthy range."); }
 
   // ---- Blood Pressure ----
-  let bpLevel = "normal";
+  let bpLevel = "normal", bpScore = 0;
   if (vitals.bp && typeof vitals.bp === "string") {
     const [sys, dia] = vitals.bp.split("/").map(Number);
-    if (sys >= 140 || dia >= 90) {
-      bpLevel = "high"; riskScore += 25; notes.push("High blood pressure detected.");
-    } else if (sys <= 90 || dia <= 60) {
-      bpLevel = "low"; riskScore += 20; notes.push("Low blood pressure detected.");
-    } else {
-      notes.push("Blood pressure is in normal range.");
-    }
+    bpScore = (sys || 120);
+    if (sys >= 140 || dia >= 90) { bpLevel = "high"; riskScore += 25; notes.push("High blood pressure detected."); }
+    else if (sys <= 90 || dia <= 60) { bpLevel = "low"; riskScore += 20; notes.push("Low blood pressure detected."); }
+    else { notes.push("Blood pressure is in normal range."); }
   }
 
   // ---- Sleep ----
-  let sleepLevel = "normal";
-  if (vitals.sleepHours) {
-    if (vitals.sleepHours < 6) {
-      sleepLevel = "short"; riskScore += 20; notes.push("You are not getting enough sleep.");
-    } else if (vitals.sleepHours > 10) {
-      sleepLevel = "long"; riskScore += 15; notes.push("Oversleeping may cause fatigue.");
-    } else {
-      notes.push("Sleep duration is healthy.");
-    }
-  }
+  let sleepLevel = "normal", sleepScore = Number(vitals.sleepHours) || 0;
+  if (sleepScore < 6) { sleepLevel = "short"; riskScore += 20; notes.push("You are not getting enough sleep."); }
+  else if (sleepScore > 10) { sleepLevel = "long"; riskScore += 15; notes.push("Oversleeping may cause fatigue."); }
+  else if (sleepScore > 0) { notes.push("Sleep duration is healthy."); }
 
   // ---- Stress ----
-  let stressLevel = "moderate";
-  if (vitals.stressLevel) {
-    if (vitals.stressLevel >= 70) {
-      stressLevel = "high"; riskScore += 25; notes.push("Stress levels are high. Practice relaxation.");
-    } else if (vitals.stressLevel <= 30) {
-      stressLevel = "low"; notes.push("Stress levels are low.");
-    } else {
-      notes.push("Stress levels are moderate.");
-    }
-  }
+  let stressLevel = "moderate", stressScore = Number(vitals.stressLevel) || 0;
+  if (stressScore >= 70) { stressLevel = "high"; riskScore += 25; notes.push("Stress levels are high. Practice relaxation."); }
+  else if (stressScore > 0 && stressScore <= 30) { stressLevel = "low"; notes.push("Stress levels are low."); }
+  else if (stressScore > 0) { notes.push("Stress levels are moderate."); }
 
   // ---- Temperature ----
-  let tempLevel = "normal";
-  if (vitals.temperature) {
-    if (vitals.temperature >= 38) {
-      tempLevel = "fever"; riskScore += 30; notes.push("Fever detected. Stay hydrated and rest.");
-    } else if (vitals.temperature <= 35.5) {
-      tempLevel = "low"; riskScore += 20; notes.push("Low body temperature detected.");
-    } else {
-      notes.push("Body temperature is normal.");
-    }
-  }
+  let tempLevel = "normal", tempScore = Number(vitals.temperature) || 0;
+  if (tempScore >= 38) { tempLevel = "fever"; riskScore += 30; notes.push("Fever detected. Stay hydrated and rest."); }
+  else if (tempScore > 0 && tempScore <= 35.5) { tempLevel = "low"; riskScore += 20; notes.push("Low body temperature detected."); }
+  else if (tempScore > 0) { notes.push("Body temperature is normal."); }
 
   // ---- Energy ----
-  let energyLevel = "balanced";
-  if (vitals.energy) {
-    if (vitals.energy <= 30) {
-      energyLevel = "low"; riskScore += 15; notes.push("Low energy reported. Take a break.");
-    } else if (vitals.energy >= 80) {
-      energyLevel = "high"; notes.push("Energy levels are high.");
-    } else {
-      notes.push("Energy levels are balanced.");
-    }
-  }
+  let energyLevel = "balanced", energyScore = Number(vitals.energy) || 0;
+  if (energyScore <= 30 && energyScore > 0) { energyLevel = "low"; riskScore += 15; notes.push("Low energy reported. Take a break."); }
+  else if (energyScore >= 80) { energyLevel = "high"; notes.push("Energy levels are high."); }
+  else if (energyScore > 0) { notes.push("Energy levels are balanced."); }
 
   // ---- Risk Categorization ----
   let overall = { level: "low", score: riskScore };
@@ -460,18 +429,20 @@ function generateAssessmentFromVitals() {
   return {
     overall,
     categories: {
-      anxiety: { level: stressLevel, score: vitals.stressLevel || 0 },
-      depression: { level: sleepLevel, score: vitals.sleepHours || 0 },
-      stress: { level: stressLevel, score: vitals.stressLevel || 0 },
-      nervousBreakdown: { level: hrLevel, score: vitals.heartRate || 0 },
-      selfHarmRisk: { level: bpLevel, score: vitals.bp || 0 }
+      anxiety: { level: stressLevel, score: stressScore },
+      depression: { level: sleepLevel, score: sleepScore },
+      stress: { level: stressLevel, score: stressScore },
+      nervousBreakdown: { level: hrLevel, score: hrScore },
+      selfHarmRisk: { level: bpLevel, score: bpScore }
     },
     notes
   };
 }
 
 
+
 // Initialize Google API
 handleClientLoad();
+
 
 
