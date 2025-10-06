@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="styles.css">
   <script src="https://apis.google.com/js/api.js"></script>
   <script src="script.js" defer></script>
-
 </head>
 <body>
   <nav class="navbar">
@@ -25,10 +24,28 @@
   <section class="hero">
     <h2>Track. Heal. Thrive.</h2>
     <p>Your mental health companion that cares for you 24/7.</p>
+
+    <!-- Google Fit Connect Button -->
+    <div id="googleFitConnectContainer" style="margin: 20px 0;">
+      <button id="connectGoogleFit" class="btn">Connect Google Fit</button>
+    </div>
+
     <a href="dashboard.html" class="btn">Go to Dashboard</a>
   </section>
 
-  <script src="script.js"></script>
+  <script>
+    // Trigger Google Fit authentication when button is clicked
+    document.getElementById("connectGoogleFit")?.addEventListener("click", () => {
+      if (typeof handleClientLoad === "function") {
+        handleClientLoad();
+        // Optionally change button text after connecting
+        document.getElementById("connectGoogleFit").textContent = "Connecting...";
+      } else {
+        alert("Google Fit script not loaded yet.");
+      }
+    });
+  </script>
 </body>
 </html>
+
 
