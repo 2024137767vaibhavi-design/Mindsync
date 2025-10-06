@@ -46,7 +46,7 @@ app.use("/api/google-fit", googleFitRoutes);
 
 // ------------------ FRONTEND SERVE ------------------
 // Adjust path to your frontend folder
-const frontendPath = path.join(__dirname, "../frontend");
+const frontendPath = path.join(__dirname, "../public");
 app.use(express.static(frontendPath));
 
 // Fallback: serve index.html for SPA routes
@@ -60,4 +60,5 @@ app.get("/ping", (req, res) => res.send("✅ Server is alive"));
 // ------------------ START SERVER ------------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🌐 Server running on http://localhost:${PORT}`));
+
 
