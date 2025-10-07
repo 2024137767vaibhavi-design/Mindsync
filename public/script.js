@@ -1,6 +1,8 @@
 let currentVitals = {};
 let lineChartInstance;
 let barChartInstance;
+let isGoogleFitConnected = false;
+
 
 // ==================== DOMContentLoaded ====================
 document.addEventListener("DOMContentLoaded", () => {
@@ -141,6 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadJournalHistory();
 });
 
+
 // ==================== GOOGLE FIT CONNECTION ====================
 const CLIENT_ID = "967470420573-ud9hi0usoshj70rormfopg35cfe81m6d.apps.googleusercontent.com";
 const SCOPES = [
@@ -149,44 +152,50 @@ const SCOPES = [
   "https://www.googleapis.com/auth/fitness.sleep.read"
 ];
 
-let isGoogleFitConnected = false;
+// Trigger Google Fit auth when button clicked
+document.getElementById("connectGoogleFit")?.addEventListener("click", () => {
+  handleClientLoad();
+  document.getElementById("connectGoogleFit").textContent = "Connecting...";
+});
 
+// Load Google API client
 function handleClientLoad() {
   gapi.load("client:auth2", initClient);
 }
 
 function initClient() {
-  gapi.client
-    .init({
-      clientId: CLIENT_ID,
-      scope: SCOPES.join(" "),
-      discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/fitness/v1/rest"],
-    })
-    .then(() => {
-      const auth = gapi.auth2.getAuthInstance();
-      if (!auth.isSignedIn.get()) {
-        return auth.signIn();
-      }
-    })
-    .then(() => {
-      isGoogleFitConnected = true;
-      updateConnectButton();
-      fetchVitals();
-    })
-    .catch((err) => {
-      console.error("Google Fit sign-in failed:", err);
-      alert("⚠️ Failed to connect to Google Fit. Check console for details.");
-    });
+  gapi.client.init({
+    clientId: CLIENT_ID,
+    scope: SCOPES.join(" "),
+    discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/fitness/v1/rest"]
+  })
+  .then(() => {
+    const auth = gapi.auth2.getAuthInstance();
+    if (!auth.isSignedIn.get()) {
+      return auth.signIn();
+    }
+  })
+  .then(() => {
+    isGoogleFitConnected = true;
+    updateConnectButton();
+    fetchVitals();
+  })
+  .catch(err => {
+    console.error("Google Fit sign-in failed:", err);
+    alert("⚠️ Failed to connect to Google Fit. Check console for details.");
+    document.getElementById("connectGoogleFit").textContent = "Connect Google Fit";
+  });
 }
 
 function updateConnectButton() {
   const btn = document.getElementById("connectGoogleFit");
   if (btn) {
-    btn.textContent = "Connected ✅";
-    btn.disabled = true;
+    btn.textContent = isGoogleFitConnected ? "Connected ✅" : "Connect Google Fit";
+    btn.disabled = isGoogleFitConnected;
   }
 }
 
+// ==================== FETCH VITALS ====================
 async function fetchVitals() {
   if (!isGoogleFitConnected) return;
 
@@ -200,7 +209,7 @@ async function fetchVitals() {
       steps: "com.google.step_count.delta",
       sleepHours: "com.google.sleep.duration",
       bp: "com.google.blood_pressure",
-      temperature: "com.google.body.temperature",
+      temperature: "com.google.body.temperature"
     };
 
     currentVitals = {};
@@ -210,11 +219,12 @@ async function fetchVitals() {
         aggregateBy: [{ dataTypeName: metrics[key] }],
         bucketByTime: { durationMillis: 86400000 },
         startTimeMillis: oneWeekAgo,
-        endTimeMillis: now,
+        endTimeMillis: now
       };
+
       const response = await gapi.client.fitness.users.dataset.aggregate({
         userId: "me",
-        resource: body,
+        resource: body
       });
 
       let value = "--";
@@ -236,11 +246,13 @@ async function fetchVitals() {
       if (el) el.textContent = value;
     }
 
-    console.log("✅ Vitals fetched:", currentVitals);
+    console.log("✅ Vitals fetched from Google Fit:", currentVitals);
   } catch (err) {
     console.error("Error fetching Google Fit vitals:", err);
+    alert("⚠️ Failed to fetch Google Fit data. Check console.");
   }
 }
+
 
 
 
