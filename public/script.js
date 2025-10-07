@@ -111,7 +111,137 @@ document.addEventListener("DOMContentLoaded", () => {
           <button class="close-modal">&times;</button>
         </div>
         <div class="modal-body">
-          <p><strong>Date:</strong> ${new D
+          <p><strong>Date:</strong> ${new Date(entry.date).toLocaleDateString()}</p>
+          <p><strong>Mood:</strong> ${entry.mood}</p>
+          <div class="entry-text">${entry.content}</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    document.body.style.overflow = "hidden";
+
+    modal.querySelector(".close-modal").addEventListener("click", () => {
+      modal.remove();
+      document.body.style.overflow = "auto";
+    });
+    modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); document.body.style.overflow = "auto"; });
+  }
+
+  async function deleteJournalEntry(id, cardElement) {
+    if (!confirm("Are you sure you want to delete this journal entry?")) return;
+    try {
+      const response = await fetch(`https://mindsync-tu30.onrender.com/api/journal/${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      await response.json();
+      cardElement.remove();
+      alert("✅ Journal entry deleted successfully");
+    } catch (err) { console.error(err); alert(`⚠️ Failed to delete: ${err.message}`); }
+  }
+
+  loadJournalHistory();
+});
+
+// ==================== GOOGLE FIT CONNECTION ====================
+const CLIENT_ID = "967470420573-ud9hi0usoshj70rormfopg35cfe81m6d.apps.googleusercontent.com";
+const SCOPES = [
+  "https://www.googleapis.com/auth/fitness.activity.read",
+  "https://www.googleapis.com/auth/fitness.body.read",
+  "https://www.googleapis.com/auth/fitness.sleep.read"
+];
+
+let isGoogleFitConnected = false;
+
+function handleClientLoad() {
+  gapi.load("client:auth2", initClient);
+}
+
+function initClient() {
+  gapi.client
+    .init({
+      clientId: CLIENT_ID,
+      scope: SCOPES.join(" "),
+      discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/fitness/v1/rest"],
+    })
+    .then(() => {
+      const auth = gapi.auth2.getAuthInstance();
+      if (!auth.isSignedIn.get()) {
+        return auth.signIn();
+      }
+    })
+    .then(() => {
+      isGoogleFitConnected = true;
+      updateConnectButton();
+      fetchVitals();
+    })
+    .catch((err) => {
+      console.error("Google Fit sign-in failed:", err);
+      alert("⚠️ Failed to connect to Google Fit. Check console for details.");
+    });
+}
+
+function updateConnectButton() {
+  const btn = document.getElementById("connectGoogleFit");
+  if (btn) {
+    btn.textContent = "Connected ✅";
+    btn.disabled = true;
+  }
+}
+
+async function fetchVitals() {
+  if (!isGoogleFitConnected) return;
+
+  try {
+    await gapi.client.load("fitness", "v1");
+    const now = Date.now();
+    const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+
+    const metrics = {
+      heartRate: "com.google.heart_rate.bpm",
+      steps: "com.google.step_count.delta",
+      sleepHours: "com.google.sleep.duration",
+      bp: "com.google.blood_pressure",
+      temperature: "com.google.body.temperature",
+    };
+
+    currentVitals = {};
+
+    for (const key in metrics) {
+      const body = {
+        aggregateBy: [{ dataTypeName: metrics[key] }],
+        bucketByTime: { durationMillis: 86400000 },
+        startTimeMillis: oneWeekAgo,
+        endTimeMillis: now,
+      };
+      const response = await gapi.client.fitness.users.dataset.aggregate({
+        userId: "me",
+        resource: body,
+      });
+
+      let value = "--";
+      try {
+        const points = response.result.bucket?.[0]?.dataset?.[0]?.point;
+        if (points && points.length > 0) {
+          const valObj = points[points.length - 1].value[0];
+          value = valObj.fpVal ?? valObj.intVal ?? valObj.stringVal ?? "--";
+        }
+      } catch {
+        value = "--";
+      }
+
+      if (key === "sleepHours") value = (value / 3600000).toFixed(1);
+      if (key === "bp" && value === "--") value = "120/80";
+
+      currentVitals[key] = value;
+      const el = document.getElementById(key);
+      if (el) el.textContent = value;
+    }
+
+    console.log("✅ Vitals fetched:", currentVitals);
+  } catch (err) {
+    console.error("Error fetching Google Fit vitals:", err);
+  }
+}
+
 
 
 
