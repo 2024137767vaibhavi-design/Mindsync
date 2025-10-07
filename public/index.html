@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -32,20 +32,6 @@
 
     <a href="dashboard.html" class="btn">Go to Dashboard</a>
   </section>
-
-  <script>
-    // Trigger Google Fit authentication when button is clicked
-    document.getElementById("connectGoogleFit")?.addEventListener("click", () => {
-      if (typeof handleClientLoad === "function") {
-        handleClientLoad();
-        // Optionally change button text after connecting
-        document.getElementById("connectGoogleFit").textContent = "Connecting...";
-      } else {
-        alert("Google Fit script not loaded yet.");
-      }
-    });
-  </script>
 </body>
 </html>
-
 
