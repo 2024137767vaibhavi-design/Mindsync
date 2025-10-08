@@ -252,6 +252,53 @@ async function fetchVitals() {
     alert("⚠️ Failed to fetch Google Fit data. Check console.");
   }
 }
+//chatbot
+const sendBtn = document.getElementById("sendBtn");
+const chatInput = document.getElementById("chatInput");
+const chatBox = document.getElementById("chatBox");
+
+function addMessage(sender, text) {
+  const msg = document.createElement("div");
+  msg.classList.add("message", sender);
+  msg.innerHTML = `<p>${text}</p>`;
+  chatBox.appendChild(msg);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+async function getBotResponse(userInput) {
+  try {
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: userInput }),
+    });
+    const data = await res.json();
+    return data.reply;
+  } catch {
+    return "⚠️ Could not connect to MindCare server.";
+  }
+}
+
+sendBtn.addEventListener("click", async () => {
+  const userInput = chatInput.value.trim();
+  if (!userInput) return;
+
+  addMessage("user", userInput);
+  chatInput.value = "";
+
+  addMessage("bot", "Typing...");
+  const typing = chatBox.lastChild;
+
+  const reply = await getBotResponse(userInput);
+  typing.remove();
+
+  addMessage("bot", reply);
+});
+
+chatInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") sendBtn.click();
+});
+
 
 
 
