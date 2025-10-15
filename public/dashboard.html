@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindCare - Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <h1 class="logo">
+      <img src="assets/image.png" alt="MindCare Logo" class="logo-img">
+    </h1>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="journal.html">Journal</a></li>
+      <li><a href="wellness.html">Wellness</a></li>
+      <li><a href="playlist.html">Playlist</a></li>
+      <li><a href="emergency.html">Emergency</a></li>
+    </ul>
+  </nav>
+
+  <!-- Dashboard Vitals -->
+  <main class="dashboard">
+    <h2>📊 Health Dashboard</h2>
+    <div class="vitals-grid">
+      <div class="vital-card" onclick="showGraph('steps')">
+        <h3>Steps</h3>
+        <p id="steps">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('heartRate')">
+        <h3>Heart Rate</h3>
+        <p id="heartRate">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('sleepHours')">
+        <h3>Sleep Hours</h3>
+        <p id="sleepHours">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('bp')">
+        <h3>Blood Pressure</h3>
+        <p id="bp">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('energy')">
+        <h3>Energy</h3>
+        <p id="energy">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('stressLevel')">
+        <h3>Stress Level</h3>
+        <p id="stressLevel">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('temperature')">
+        <h3>Body Temp</h3>
+        <p id="temperature">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('ecg')">
+        <h3>ECG</h3>
+        <p id="ecg">--</p>
+      </div>
+    </div>
+
+    <!-- Graph Modal -->
+    <div id="graphModal" class="graph-modal" onclick="closeGraph(event)">
+      <div class="graph-content">
+        <span class="close" onclick="closeGraph()">×</span>
+        <h3 id="graphTitle"></h3>
+        <canvas id="lineChart"></canvas>
+        <canvas id="barChart"></canvas>
+        <p id="graphAnalysis"></p>
+      </div>
+    </div>
+
+    <!-- Google Fit Connect -->
+    <div class="google-fit">
+      <h3>Connect Google Fit</h3>
+      <a href="http://localhost:5000/api/google-fit/auth" class="connect-btn">Connect Now</a>
+    </div>
+  </main>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
