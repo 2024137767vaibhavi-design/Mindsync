@@ -41,14 +41,14 @@ connectDB();
 app.use("/api/journal", journalRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 // Serve static files
-app.use(express.static(path.join(__dirname, "public"))); // or "frontend"
+app.use(express.static(path.join(__dirname, "..", "public")));
 
 // Test route
 app.get("/ping", (req, res) => res.send("✅ Server is alive"));
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html")); // or "frontend"
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
-
 const PORT = process.env.PORT || 5001; // Changed port to 5001
 app.listen(PORT, () => console.log(`🌐 Server running on port ${PORT}`));
+
 
