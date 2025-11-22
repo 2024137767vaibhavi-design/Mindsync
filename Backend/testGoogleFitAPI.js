@@ -2,7 +2,7 @@ import fetch from "node-fetch";
 
 const testGoogleFitAPI = async () => {
   try {
-    const response = await fetch("http://localhost:5001/api/googleFit/fitness-data");
+    const response = await fetch("https://mindsync-tu30.onrender.com/api/googleFit/fitness-data");
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -13,5 +13,6 @@ const testGoogleFitAPI = async () => {
     console.error("❌ Error testing Google Fit API:", error.message);
   }
 };
+
 
 testGoogleFitAPI();
