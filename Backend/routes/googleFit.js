@@ -6,7 +6,7 @@ const router = express.Router();
 
 // OAuth2 client setup
 const getRedirectUri = () => {
-  const baseUrl = process.env.BASE_URL || process.env.FRONTEND_URL || "http://localhost:5000";
+  const baseUrl = process.env.BASE_URL || process.env.FRONTEND_URL || "https://mindsync-tu30.onrender.com/";
   return `${baseUrl}/api/googlefit/oauth2callback`;
 };
 
@@ -34,7 +34,7 @@ router.get("/auth", (req, res) => {
 // Step 2: Handle callback from Google
 router.get("/oauth2callback", async (req, res) => {
   const { code } = req.query;
-  const frontendUrl = process.env.FRONTEND_URL || process.env.BASE_URL || "http://localhost:5000";
+  const frontendUrl = process.env.FRONTEND_URL || process.env.BASE_URL || "https://mindsync-tu30.onrender.com/";
   
   if (!code) {
     return res.redirect(`${frontendUrl}/dashboard.html?error=no_code`);
@@ -54,11 +54,11 @@ router.get("/oauth2callback", async (req, res) => {
 
     console.log("Google Fit tokens saved:", tokens);
     // Redirect back to frontend dashboard with success message
-    const frontendUrl = process.env.FRONTEND_URL || process.env.BASE_URL || "http://localhost:5000";
+    const frontendUrl = process.env.FRONTEND_URL || process.env.BASE_URL || "https://mindsync-tu30.onrender.com/";
     res.redirect(`${frontendUrl}/dashboard.html?connected=true`);
   } catch (err) {
     console.error("OAuth callback error:", err);
-    const frontendUrl = process.env.FRONTEND_URL || process.env.BASE_URL || "http://localhost:5000";
+    const frontendUrl = process.env.FRONTEND_URL || process.env.BASE_URL || "https://mindsync-tu30.onrender.com/";
     res.redirect(`${frontendUrl}/dashboard.html?error=connection_failed`);
   }
 });
@@ -122,3 +122,4 @@ router.get("/fitness-data", async (req, res) => {
 });
 
 export default router;
+
