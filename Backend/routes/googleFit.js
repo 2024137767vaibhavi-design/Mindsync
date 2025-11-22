@@ -6,7 +6,7 @@ const router = express.Router();
 
 // OAuth2 client setup
 const getRedirectUri = () => {
-  const baseUrl = process.env.BASE_URL || process.env.FRONTEND_URL || "https://mindsync-tu30.onrender.com/";
+  const baseUrl = process.env.BASE_URL || process.env.FRONTEND_URL || "https://mindsync-tu30.onrender.com";
   return `${baseUrl}/api/googlefit/oauth2callback`;
 };
 
@@ -122,4 +122,5 @@ router.get("/fitness-data", async (req, res) => {
 });
 
 export default router;
+
 
