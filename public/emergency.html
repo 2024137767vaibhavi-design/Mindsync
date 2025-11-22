@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MindSync - Emergency</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="brand">
+      <img src="assets/image.png" alt="MindSync Logo" class="logo-img" />
+      <span class="logo-text">MindSync</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="journal.html">Journal</a></li>
+      <li><a href="wellness.html">Wellness</a></li>
+      <li><a href="playlist.html">Playlist</a></li>
+      <li><a href="chatbot.html">Chatbot</a></li>
+      <li><a href="emergency.html">Emergency</a></li>
+    </ul>
+  </nav>
+
+  <main class="emergency-page">
+    <div id="criticalAlert" class="critical-alert" style="display: none;">
+      <div class="alert-content">
+        <h2>⚠️ CRITICAL ALERT</h2>
+        <p id="alertMessage">Your mental health score is critical. Emergency SOS has been activated.</p>
+        <div class="alert-actions">
+          <button id="confirmSOS" class="btn-sos-confirm">🚨 Confirm SOS</button>
+          <button id="cancelSOS" class="btn-sos-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="emergency-card">
+      <h2>🚨 Emergency SOS</h2>
+      <p class="emergency-description">If you're in immediate danger or experiencing a mental health crisis, activate SOS to contact your emergency contacts.</p>
+      
+      <div class="sos-controls">
+        <button id="sosBtn" class="sos-btn-large">
+          <span class="sos-icon">🚨</span>
+          <span class="sos-text">Send Emergency SOS</span>
+        </button>
+        <button id="dismissBtn" class="dismiss-btn-large">Dismiss Alert</button>
+        <div id="countdown" class="countdown-display"></div>
+      </div>
+
+      <div class="emergency-info">
+        <p><strong>When to use SOS:</strong></p>
+        <ul>
+          <li>Immediate danger to yourself or others</li>
+          <li>Severe mental health crisis</li>
+          <li>Thoughts of self-harm or suicide</li>
+          <li>Need immediate professional help</li>
+        </ul>
+        <p class="emergency-help">
+          <strong>Need immediate help?</strong><br>
+          National Suicide Prevention Lifeline: 988<br>
+          Crisis Text Line: Text HOME to 741741
+        </p>
+      </div>
+    </section>
+
+    <section class="emergency-contacts-card">
+      <h2>📞 Emergency Contacts</h2>
+      <p class="contacts-description">Add trusted contacts who will be notified when you activate SOS.</p>
+      
+      <form id="contactForm" class="contact-form">
+        <div class="form-row">
+          <input type="text" id="contactName" placeholder="Name" required />
+          <input type="tel" id="contactPhone" placeholder="Phone Number" required />
+        </div>
+        <input type="text" id="contactRelation" placeholder="Relationship (e.g., Family, Friend)" />
+        <button type="submit" class="btn-add-contact">➕ Add Contact</button>
+      </form>
+
+      <div id="contactList" class="contact-list"></div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

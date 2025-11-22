@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MindSync - Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="brand">
+      <img src="assets/image.png" alt="MindSync Logo" class="logo-img" />
+      <span class="logo-text">MindSync</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="journal.html">Journal</a></li>
+      <li><a href="wellness.html">Wellness</a></li>
+      <li><a href="playlist.html">Playlist</a></li>
+      <li><a href="chatbot.html">Chatbot</a></li>
+      <li><a href="emergency.html">Emergency</a></li>
+    </ul>
+  </nav>
+
+  <main class="dashboard">
+    <h2>📊 Health Dashboard</h2>
+
+    <div class="dashboard-actions">
+      <button id="addVitalBtn" class="btn-primary">➕ Add Vitals Manually</button>
+      <button id="connectWearableBtn" class="btn-secondary">⌚ Connect Wearable Device</button>
+    </div>
+
+    <div class="vitals-grid">
+      <div class="vital-card" onclick="showGraph('steps')">
+        <h3>Steps</h3>
+        <p id="steps">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('heartRate')">
+        <h3>Heart Rate</h3>
+        <p id="heartRate">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('sleepHours')">
+        <h3>Sleep Hours</h3>
+        <p id="sleepHours">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('bp')">
+        <h3>Blood Pressure</h3>
+        <p id="bp">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('energy')">
+        <h3>Energy</h3>
+        <p id="energy">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('stressLevel')">
+        <h3>Stress</h3>
+        <p id="stressLevel">--</p>
+      </div>
+      <div class="vital-card" onclick="showGraph('temperature')">
+        <h3>Temperature</h3>
+        <p id="temperature">--</p>
+      </div>
+    </div>
+
+    <div id="graphModal" class="graph-modal" onclick="closeGraph(event)">
+      <div class="graph-content">
+        <span class="close" onclick="closeGraph()">×</span>
+        <h3 id="graphTitle"></h3>
+        <canvas id="vitalsChart"></canvas>
+        <p id="graphAnalysis" class="analysis"></p>
+      </div>
+    </div>
+    <section id="analysis" class="card">
+      <h2>Mental Wellness Analysis</h2>
+       <div id="wellness-score">Loading...</div>
+       <div id="wellness-status"></div>
+       <p class="wellness-link"><a href="wellness.html">View detailed wellness tips and recommendations →</a></p>
+    </section>
+  </main>
+
+  <!-- Manual Entry Modal -->
+  <div id="manualEntryModal" class="modal-overlay">
+    <div class="modal-content-vitals">
+      <div class="modal-header">
+        <h2>📝 Add Vitals Manually</h2>
+        <span class="close-modal" onclick="closeManualEntry()">×</span>
+      </div>
+      <form id="vitalsEntryForm" class="vitals-form">
+        <div class="form-group">
+          <label for="entryDate">Date:</label>
+          <input type="date" id="entryDate" required value="">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="manualSteps">Steps:</label>
+            <input type="number" id="manualSteps" min="0" placeholder="e.g., 8000">
+          </div>
+          <div class="form-group">
+            <label for="manualHeartRate">Heart Rate (bpm):</label>
+            <input type="number" id="manualHeartRate" min="40" max="220" placeholder="e.g., 72">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="manualSleep">Sleep Hours:</label>
+            <input type="number" id="manualSleep" min="0" max="24" step="0.5" placeholder="e.g., 7.5">
+          </div>
+          <div class="form-group">
+            <label for="manualEnergy">Energy Level (%):</label>
+            <input type="number" id="manualEnergy" min="0" max="100" placeholder="e.g., 75">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="manualBP">Blood Pressure (sys/dia):</label>
+            <input type="text" id="manualBP" pattern="\d{2,3}/\d{2,3}" placeholder="e.g., 120/80">
+          </div>
+          <div class="form-group">
+            <label for="manualTemp">Temperature (°C):</label>
+            <input type="number" id="manualTemp" min="35" max="42" step="0.1" placeholder="e.g., 36.6">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="manualStress">Stress Level (%):</label>
+          <input type="number" id="manualStress" min="0" max="100" placeholder="e.g., 45">
+        </div>
+
+        <div class="form-actions">
+          <button type="button" onclick="closeManualEntry()" class="btn-cancel">Cancel</button>
+          <button type="submit" class="btn-submit">Save Vitals</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Wearable Device Modal -->
+  <div id="wearableModal" class="modal-overlay">
+    <div class="modal-content-vitals">
+      <div class="modal-header">
+        <h2>⌚ Connect Wearable Device</h2>
+        <span class="close-modal" onclick="closeWearableModal()">×</span>
+      </div>
+      <div class="wearable-options">
+        <button id="googleFitBtn" class="wearable-btn" onclick="connectWearable('google-fit')">
+          <div class="wearable-btn-content">
+            <span class="wearable-icon">🔗</span>
+            <span class="wearable-name">Google Fit</span>
+          </div>
+          <span id="googleFitStatusBadge" class="status-badge"></span>
+        </button>
+        <button class="wearable-btn" onclick="connectWearable('apple-health')">
+          <span class="wearable-icon">🍎</span>
+          <span class="wearable-name">Apple Health</span>
+        </button>
+        <button class="wearable-btn" onclick="connectWearable('fitbit')">
+          <span class="wearable-icon">⌚</span>
+          <span class="wearable-name">Fitbit</span>
+        </button>
+        <button class="wearable-btn" onclick="connectWearable('garmin')">
+          <span class="wearable-icon">📊</span>
+          <span class="wearable-name">Garmin</span>
+        </button>
+        <p class="wearable-note">Select your wearable device to sync health data automatically.</p>
+        <div id="wearableConnectionStatus" class="wearable-status"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="chart.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
